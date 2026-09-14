@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="LibraryService.BusinessLogic/LibraryService.BusinessLogic.csproj" />
+  <Project Path="LibraryService.Commons/LibraryService.Commons.csproj" Id="aaf68650-e192-4a61-aafa-2c6b68257bd0" />
+  <Project Path="LibraryService.Entities/LibraryService.Entities.csproj" />
+  <Project Path="LibraryService.Models/LibraryService.Models.csproj" />
+  <Project Path="LibraryService/LibraryService.csproj" />
+</Solution>
