@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryService.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/staff")]
     [ApiController]
     [Authorize]
     public class StaffController(IStaffLogic staffLogic) : ControllerBase

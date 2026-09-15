@@ -1,25 +1,38 @@
-﻿using LibraryService.BusinessLogic;
-using LibraryService.BusinessLogic.Interfaces;
+﻿using LibraryService.BusinessLogic.Interfaces;
 using LibraryService.Models;
 using LibraryService.Models.BookModel;
-using LibraryService.Models.StaffModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace LibraryService.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/book")]
     [ApiController]
     [Authorize]
     public class BooksController(IBooksLogic bookLogic) : ControllerBase
     {
         private readonly IBooksLogic _bookLogic = bookLogic;
 
-        [HttpPost("get")]
-        [AllowAnonymous]
-        public async Task<ActionResult<ResponseModel>> GetBooks(GetBookInputModel data)
+        [HttpGet("get-byid")]
+        public async Task<ActionResult<ResponseModel>> GetBooksById([Required] Guid id)
         {
-            ResponseModel response = await _bookLogic.GetBooksAsync(data);
+            ResponseModel response = await _bookLogic.GetBooksByIdAsync(id);
+            if (response.Status == StatusCodes.Status200OK)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return StatusCode(response.Status, response);
+            }
+        }
+
+        [HttpPost("list")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ResponseModel>> GetBooksList(GetBookInputModel data)
+        {
+            ResponseModel response = await _bookLogic.GetBooksListAsync(data);
             if (response.Status == StatusCodes.Status200OK)
             {
                 return Ok(response);
@@ -58,24 +71,10 @@ namespace LibraryService.Controllers
             }
         }
 
-        [HttpPost("update-isbn")]
-        public async Task<ActionResult<ResponseModel>> UpdateISBN(UpdateBookISBNInputModel data)
+        [HttpDelete("delete")]
+        public async Task<ActionResult<ResponseModel>> DeleteBooks([Required] Guid id)
         {
-            ResponseModel response = await _bookLogic.UpdateISBNAsync(data);
-            if (response.Status == StatusCodes.Status200OK)
-            {
-                return Ok(response);
-            }
-            else
-            {
-                return StatusCode(response.Status, response);
-            }
-        }
-
-        [HttpPost("delete")]
-        public async Task<ActionResult<ResponseModel>> DeleteBooks(DeleteBookInputModel data)
-        {
-            ResponseModel response = await _bookLogic.DeleteBooksAsync(data);
+            ResponseModel response = await _bookLogic.DeleteBooksAsync(id);
             if (response.Status == StatusCodes.Status200OK)
             {
                 return Ok(response);

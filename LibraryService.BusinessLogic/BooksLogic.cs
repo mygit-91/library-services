@@ -6,7 +6,6 @@ using LibraryService.Models;
 using LibraryService.Models.BookModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.Intrinsics.X86;
 
 namespace LibraryService.BusinessLogic
 {
@@ -14,7 +13,50 @@ namespace LibraryService.BusinessLogic
     {
         private readonly AppDbContext _context = context;
 
-        public async Task<ResponseModel> GetBooksAsync(GetBookInputModel data)
+        public async Task<ResponseModel> GetBooksByIdAsync(Guid bookId)
+        {
+            ResponseModel response;
+
+            try
+            {
+                // Create query
+                IQueryable<Books> booksQuery = _context.Books.Where(books => books.Book_Id == bookId);
+                IQueryable<Categories> categoryQuery = _context.Categories;
+
+                // Join with Categories
+                var joinedQuery = (from books in booksQuery
+                                   join categories in categoryQuery
+                                   on books.Category_Id equals categories.Category_Id
+                                   select new
+                                   {
+                                       bookId = books.Book_Id,
+                                       isbn = books.ISBN,
+                                       title = books.Title,
+                                       author = books.Author,
+                                       publisher = books.Publisher,
+                                       publishYear = books.Publish_Year,
+                                       totalCopies = books.Total_Copies,
+                                       availableCopies = books.Available_Copies,
+                                       location = books.Location,
+                                       isActive = books.Is_Active,
+                                       categoryId = books.Category_Id,
+                                       categoryName = categories.Category_Name,
+                                   });
+
+                // Process query
+                var result = await joinedQuery.ToListAsync();
+
+                response = new ResponseModel(StatusCodes.Status200OK, AppMessage.SUCCESS, result);
+            }
+            catch (Exception ex)
+            {
+                response = new ResponseModel(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+
+            return response;
+        }
+
+        public async Task<ResponseModel> GetBooksListAsync(GetBookInputModel data)
         {
             ResponseModel response;
 
@@ -63,6 +105,7 @@ namespace LibraryService.BusinessLogic
                                        author = books.Author,
                                        publisher = books.Publisher,
                                        publishYear = books.Publish_Year,
+                                       totalCopies = books.Total_Copies,
                                        availableCopies = books.Available_Copies,
                                        location = books.Location,
                                        isActive = books.Is_Active,
@@ -120,7 +163,7 @@ namespace LibraryService.BusinessLogic
                     response = new ResponseModel(StatusCodes.Status200OK, AppMessage.INSERT_SUCCESS, output);
                 } else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DUPLICATE_DATA, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DUPLICATE_DATA);
                 }
             }
             catch (Exception ex)
@@ -139,25 +182,26 @@ namespace LibraryService.BusinessLogic
             {
                 // Update data
                 int rowsAffected = await _context.Books
-                    .Where(books => books.Book_Id == data.Book_Id)
+                    .Where(books => books.Book_Id == data.BookId)
                     .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(books => books.ISBN, data.ISBN)
                         .SetProperty(books => books.Title, data.Title)
                         .SetProperty(books => books.Author, data.Author)
                         .SetProperty(books => books.Publisher, data.Publisher)
-                        .SetProperty(books => books.Publish_Year, data.Publish_Year)
-                        .SetProperty(books => books.Total_Copies, data.Total_Copies)
-                        .SetProperty(books => books.Available_Copies, data.Available_Copies)
+                        .SetProperty(books => books.Publish_Year, data.PublishYear)
+                        .SetProperty(books => books.Total_Copies, data.TotalCopies)
+                        .SetProperty(books => books.Available_Copies, data.AvailableCopies)
                         .SetProperty(books => books.Location, data.Location)
-                        .SetProperty(books => books.Is_Active, data.Is_Active)
-                        .SetProperty(books => books.Category_Id, data.Category_Id));
+                        .SetProperty(books => books.Is_Active, data.IsActive)
+                        .SetProperty(books => books.Category_Id, data.CategoryId));
 
                 if (rowsAffected > 0)
                 {
-                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.UPDATE_SUCCESS, data);
+                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.UPDATE_SUCCESS);
                 }
                 else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND);
                 }
             }
             catch (Exception ex)
@@ -168,29 +212,22 @@ namespace LibraryService.BusinessLogic
             return response;
         }
 
-        public async Task<ResponseModel> UpdateISBNAsync(UpdateBookISBNInputModel data)
-        {
-            // To Do
-
-            return new ResponseModel(0, "", null);
-        }
-
-        public async Task<ResponseModel> DeleteBooksAsync(DeleteBookInputModel data)
+        public async Task<ResponseModel> DeleteBooksAsync(Guid bookId)
         {
             ResponseModel response;
 
             try
             {
                 int rowsAffected = await _context.Books
-                    .Where(books => books.Book_Id == data.Book_Id)
+                    .Where(books => books.Book_Id == bookId)
                     .ExecuteDeleteAsync();
 
                 if (rowsAffected > 0)
                 {
-                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.DELETE_SUCCESS, null);
+                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.DELETE_SUCCESS);
                 } else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND);
                 }
             }
             catch (Exception ex)
