@@ -57,7 +57,7 @@ namespace LibraryService.Controllers
             }
         }
 
-        [HttpPost("update")]
+        [HttpPut("update")]
         public async Task<ActionResult<ResponseModel>> UpdateBooks(UpdateBookInputModel data)
         {
             ResponseModel response = await _bookLogic.UpdateBooksAsync(data);

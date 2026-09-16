@@ -13,7 +13,7 @@ namespace LibraryService.BusinessLogic
     {
         private readonly AppDbContext _context = context;
 
-        public async Task<ResponseModel> GetCategoryAsync(string categoryName)
+        public async Task<ResponseModel> GetCategoryAsync(GetCategoryInputModel data)
         {
             ResponseModel response;
 
@@ -23,13 +23,29 @@ namespace LibraryService.BusinessLogic
                 IQueryable<Categories> query = _context.Categories;
 
                 // Add filter condition to query
-                if (!string.IsNullOrEmpty(categoryName))
+                string searchTopic = data.SearchTopic.ToLower();
+                string searchText = data.SearchText.ToLower();
+
+                // Add filter condition to query
+                if (searchTopic == "id")
                 {
-                    query = query.Where(categories => categories.Category_Name.Contains(categoryName));
+                    query = query.Where(categories => categories.Category_Id.ToString().Contains(searchText));
+                }
+                else if (searchTopic == "name")
+                {
+                    query = query.Where(categories => categories.Category_Name.Contains(searchText));
+                }
+                else
+                {
+                    // Seclect all
                 }
 
                 // Process query
-                var result = await query.ToListAsync();
+                var result = await query.Select(categories => new
+                {
+                    categoryId = categories.Category_Id,
+                    categoryName = categories.Category_Name,
+                }).ToListAsync();
 
                 response = new ResponseModel(StatusCodes.Status200OK, AppMessage.SUCCESS, result);
             }
@@ -48,13 +64,13 @@ namespace LibraryService.BusinessLogic
             try
             {
                 //Check existing
-                bool isExist = await _context.Categories.AnyAsync(categories => categories.Category_Name == data.Category_Name);
+                bool isExist = await _context.Categories.AnyAsync(categories => categories.Category_Name == data.CategoryName);
 
                 if (!isExist)
                 {
                     Categories category = new()
                     {
-                        Category_Name = data.Category_Name
+                        Category_Name = data.CategoryName
                     };
 
                     // Save to database
@@ -65,7 +81,7 @@ namespace LibraryService.BusinessLogic
                 }
                 else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DUPLICATE_DATA, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DUPLICATE_DATA);
                 }
             }
             catch (Exception ex)
@@ -84,9 +100,9 @@ namespace LibraryService.BusinessLogic
             {
                 // Update data
                 int rowsAffected = await _context.Categories
-                    .Where(categories => categories.Category_Id == data.Category_Id)
+                    .Where(categories => categories.Category_Id == data.CategoryId)
                     .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(categories => categories.Category_Name, data.Category_Name));
+                        .SetProperty(categories => categories.Category_Name, data.CategoryName));
 
                 if (rowsAffected > 0)
                 {
@@ -94,7 +110,7 @@ namespace LibraryService.BusinessLogic
                 }
                 else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND);
                 }
             }
             catch (Exception ex)
@@ -105,23 +121,23 @@ namespace LibraryService.BusinessLogic
             return response;
         }
 
-        public async Task<ResponseModel> DeleteCategoryAsync(DeleteCategoryInputModel data)
+        public async Task<ResponseModel> DeleteCategoryAsync(Guid categoryId)
         {
             ResponseModel response;
 
             try
             {
                 int rowsAffected = await _context.Categories
-                    .Where(categories => categories.Category_Id == data.Category_Id)
+                    .Where(categories => categories.Category_Id == categoryId)
                     .ExecuteDeleteAsync();
 
                 if (rowsAffected > 0)
                 {
-                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.DELETE_SUCCESS, null);
+                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.DELETE_SUCCESS);
                 }
                 else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND);
                 }
             }
             catch (Exception ex)

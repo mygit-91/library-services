@@ -7,9 +7,11 @@ using System.Threading.Tasks;
 
 namespace LibraryService.Models.CategoriesModel
 {
-    public class AddCategoryInputModel
+    public class GetCategoryInputModel
     {
         [Required]
-        public required string CategoryName { get; set; }
+        public required string SearchTopic { get; set; }
+
+        public required string SearchText { get; set; }
     }
 }
