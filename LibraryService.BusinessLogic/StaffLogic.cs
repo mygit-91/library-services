@@ -57,7 +57,7 @@ namespace LibraryService.BusinessLogic
             return response;
         }
 
-        public async Task<ResponseModel> GetStaffAsync(string idCard)
+        public async Task<ResponseModel> GetStaffByIdCardAsync(string idCard)
         {
             ResponseModel response;
 
@@ -92,22 +92,22 @@ namespace LibraryService.BusinessLogic
             try
             {
                 //Check existing
-                bool isExist = await _context.Staff.AnyAsync(staff => staff.ID_Card == data.ID_Card || staff.Username == data.Username);
+                bool isExist = await _context.Staff.AnyAsync(staff => staff.ID_Card == data.IdCard || staff.Username == data.Username);
 
                 if (!isExist)
                 {
                     string passwordHash = BCrypt.Net.BCrypt.HashPassword(data.Password);
                     Staff staff = new()
                     {
-                        ID_Card = data.ID_Card,
+                        ID_Card = data.IdCard,
                         Username = data.Username,
                         Password = passwordHash,
-                        First_Name = data.First_Name,
-                        Last_Name = data.Last_Name,
+                        First_Name = data.FirstName,
+                        Last_Name = data.LastName,
                         Position = data.Position,
                         Email = data.Email,
                         Phone = data.Phone,
-                        Is_Active = data.Is_Active,
+                        Is_Active = data.IsActive,
                         Create_Date = DateTime.UtcNow
                     };
 
@@ -119,7 +119,7 @@ namespace LibraryService.BusinessLogic
                 }
                 else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DUPLICATE_DATA, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DUPLICATE_DATA);
                 }
             }
             catch (Exception ex)
@@ -138,23 +138,24 @@ namespace LibraryService.BusinessLogic
             {
                 // Update data
                 int rowsAffected = await _context.Staff
-                    .Where(staff => staff.Staff_Id == data.Staff_Id)
+                    .Where(staff => staff.Staff_Id == data.StaffId)
                     .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(staff => staff.First_Name, data.First_Name)
-                        .SetProperty(staff => staff.Last_Name, data.Last_Name)
+                        .SetProperty(staff => staff.ID_Card, data.IdCard)
+                        .SetProperty(staff => staff.First_Name, data.FirstName)
+                        .SetProperty(staff => staff.Last_Name, data.LastName)
                         .SetProperty(staff => staff.Email, data.Email)
                         .SetProperty(staff => staff.Phone, data.Phone)
                         .SetProperty(staff => staff.Position, data.Position)
-                        .SetProperty(staff => staff.Is_Active, data.Is_Active)
+                        .SetProperty(staff => staff.Is_Active, data.IsActive)
                         .SetProperty(staff => staff.Update_Date, DateTime.UtcNow));
 
                 if (rowsAffected > 0)
                 {
-                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.UPDATE_SUCCESS, data);
+                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.UPDATE_SUCCESS);
                 }
                 else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND);
                 }
             }
             catch (Exception ex)
@@ -165,14 +166,49 @@ namespace LibraryService.BusinessLogic
             return response;
         }
 
-        public async Task<ResponseModel> DeleteStaffAsync(DeleteStaffInputModel data)
+        public async Task<ResponseModel> UpdatePasswordAsync(UpdateStaffPwdInputModel data)
+        {
+            ResponseModel response;
+
+            try
+            {
+                // Check username and password
+                IQueryable<Staff> query = _context.Staff.Where(staff => staff.Staff_Id == data.StaffId && staff.Username == data.Username);
+                var result = await query.ToListAsync();
+
+                if (result != null && result.Count > 0 && BCrypt.Net.BCrypt.Verify(data.CurrentPassword, result[0].Password))
+                {
+                    // Update password
+                    string passwordHash = BCrypt.Net.BCrypt.HashPassword(data.NewPassword);
+                    int rowsAffected = await _context.Staff
+                        .Where(staff => staff.Staff_Id == data.StaffId)
+                        .ExecuteUpdateAsync(setters => setters
+                            .SetProperty(staff => staff.Password, passwordHash)
+                            .SetProperty(staff => staff.Update_Date, DateTime.UtcNow));
+
+                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.UPDATE_SUCCESS);
+                }
+                else
+                {
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.INVALID_USER_LOGIN);
+                }
+            }
+            catch (Exception ex)
+            {
+                response = new ResponseModel(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+
+            return response;
+        }
+
+        public async Task<ResponseModel> DeleteStaffAsync(Guid staffId)
         {
             ResponseModel response;
 
             try
             {
                 int rowsAffected = await _context.Staff
-                    .Where(staff => staff.Staff_Id == data.Staff_Id)
+                    .Where(staff => staff.Staff_Id == staffId)
                     .ExecuteDeleteAsync();
 
                 if (rowsAffected > 0)
@@ -181,7 +217,7 @@ namespace LibraryService.BusinessLogic
                 }
                 else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND);
                 }
             }
             catch (Exception ex)
@@ -190,20 +226,6 @@ namespace LibraryService.BusinessLogic
             }
 
             return response;
-        }
-
-        public async Task<ResponseModel> UpdateIdCardAsync(UpdateStaffIDCardInputModel data)
-        {
-            // To Do
-
-            return new ResponseModel(0, "", null);
-        }
-
-        public async Task<ResponseModel> UpdatePasswordAsync(UpdateStaffPwdInputModel data)
-        {
-            // To Do
-
-            return new ResponseModel(0, "", null);
         }
     }
 }

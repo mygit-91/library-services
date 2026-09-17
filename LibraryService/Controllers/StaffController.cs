@@ -3,6 +3,7 @@ using LibraryService.Models;
 using LibraryService.Models.StaffModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace LibraryService.Controllers
 {
@@ -27,10 +28,10 @@ namespace LibraryService.Controllers
             }
         }
 
-        [HttpGet("get")]
-        public async Task<ActionResult<ResponseModel>> GetStaff(string idCard = "")
+        [HttpGet("get-byidcard")]
+        public async Task<ActionResult<ResponseModel>> GetStaffByIdCard([Required] string idCard = "")
         {
-            ResponseModel response = await _staffLogic.GetStaffAsync(idCard);
+            ResponseModel response = await _staffLogic.GetStaffByIdCardAsync(idCard);
             if (response.Status == StatusCodes.Status200OK)
             {
                 return Ok(response);
@@ -55,7 +56,7 @@ namespace LibraryService.Controllers
             }
         }
 
-        [HttpPost("update")]
+        [HttpPut("update")]
         public async Task<ActionResult<ResponseModel>> UpdateStaff(UpdateStaffInputModel data)
         {
             ResponseModel response = await _staffLogic.UpdateStaffAsync(data);
@@ -69,38 +70,24 @@ namespace LibraryService.Controllers
             }
         }
 
-        [HttpPost("delete")]
-        public async Task<ActionResult<ResponseModel>> DeleteStaff(DeleteStaffInputModel data)
-        {
-            ResponseModel response = await _staffLogic.DeleteStaffAsync(data);
-            if (response.Status == StatusCodes.Status200OK)
-            {
-                return Ok(response);
-            }
-            else
-            {
-                return StatusCode(response.Status, response);
-            }
-        }
-
-        [HttpPost("update-idcard")]
-        public async Task<ActionResult<ResponseModel>> UpdateIdCard(UpdateStaffIDCardInputModel data)
-        {
-            ResponseModel response = await _staffLogic.UpdateIdCardAsync(data);
-            if (response.Status == StatusCodes.Status200OK)
-            {
-                return Ok(response);
-            }
-            else
-            {
-                return StatusCode(response.Status, response);
-            }
-        }
-
-        [HttpPost("update-password")]
+        [HttpPut("update-password")]
         public async Task<ActionResult<ResponseModel>> UpdatePassword(UpdateStaffPwdInputModel data)
         {
             ResponseModel response = await _staffLogic.UpdatePasswordAsync(data);
+            if (response.Status == StatusCodes.Status200OK)
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return StatusCode(response.Status, response);
+            }
+        }
+
+        [HttpDelete("delete")]
+        public async Task<ActionResult<ResponseModel>> DeleteStaff([Required] Guid id)
+        {
+            ResponseModel response = await _staffLogic.DeleteStaffAsync(id);
             if (response.Status == StatusCodes.Status200OK)
             {
                 return Ok(response);

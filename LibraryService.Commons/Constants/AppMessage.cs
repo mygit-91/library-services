@@ -15,6 +15,7 @@ namespace LibraryService.Commons.Constants
         public const string DUPLICATE_DATA = "Data is duplicated";
         public const string DATA_NOT_FOUND = "Data not found";
         public const string BOOK_NOT_AVAILABLE = "Book is not available";
+        public const string CATEGORY_IN_USED = "This category is currently being used by books and cannot be deleted.";
         public const string INVALID_USER_LOGIN = "Invalid Username or Password";
     }
 }

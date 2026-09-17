@@ -6,6 +6,7 @@ using LibraryService.Models;
 using LibraryService.Models.CategoriesModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LibraryService.BusinessLogic
 {
@@ -127,17 +128,26 @@ namespace LibraryService.BusinessLogic
 
             try
             {
-                int rowsAffected = await _context.Categories
+                // Check using in book
+                bool isBookExist = await _context.Books.AnyAsync(book => book.Category_Id == categoryId);
+
+                if (!isBookExist)
+                {
+                    int rowsAffected = await _context.Categories
                     .Where(categories => categories.Category_Id == categoryId)
                     .ExecuteDeleteAsync();
 
-                if (rowsAffected > 0)
+                    if (rowsAffected > 0)
+                    {
+                        response = new ResponseModel(StatusCodes.Status200OK, AppMessage.DELETE_SUCCESS);
+                    }
+                    else
+                    {
+                        response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND);
+                    }
+                } else
                 {
-                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.DELETE_SUCCESS);
-                }
-                else
-                {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.DATA_NOT_FOUND);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.CATEGORY_IN_USED);
                 }
             }
             catch (Exception ex)
