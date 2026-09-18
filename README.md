@@ -8,9 +8,9 @@
 - Change SQLConnection to your database
 
 # SQL Config
-# Step 1. Insert Table
+# Step 1. Create Table
 
--- [Books]
+# [Books]
 CREATE TABLE [dbo].[Books](
 	[Book_Id] [uniqueidentifier] NOT NULL,
 	[ISBN] [nvarchar](15) NOT NULL,
@@ -29,7 +29,8 @@ CREATE TABLE [dbo].[Books](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 
--- [Staff]
+
+# [Staff]
 CREATE TABLE [dbo].[Staff](
 	[Staff_Id] [uniqueidentifier] NOT NULL,
 	[ID_Card] [nvarchar](15) NOT NULL,
@@ -49,7 +50,8 @@ CREATE TABLE [dbo].[Staff](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 
--- [Members]
+
+# [Members]
 CREATE TABLE [dbo].[Members](
 	[Member_Id] [uniqueidentifier] NOT NULL,
 	[ID_Card] [nvarchar](15) NOT NULL,
@@ -69,7 +71,8 @@ CREATE TABLE [dbo].[Members](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 
--- [Categories]
+
+# [Categories]
 CREATE TABLE [dbo].[Categories](
 	[Category_Id] [uniqueidentifier] NOT NULL,
 	[Category_Name] [nvarchar](100) NOT NULL,
@@ -79,7 +82,8 @@ CREATE TABLE [dbo].[Categories](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 
--- [Borrowings]
+
+# [Borrowings]
 CREATE TABLE [dbo].[Borrowings](
 	[Borrow_Id] [uniqueidentifier] NOT NULL,
 	[Book_Id] [uniqueidentifier] NOT NULL,
@@ -95,13 +99,14 @@ CREATE TABLE [dbo].[Borrowings](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 
--- [Fines]
+
+# [Fines]
 CREATE TABLE [dbo].[Fines](
 	[Fine_Id] [uniqueidentifier] NOT NULL,
 	[Borrow_Id] [uniqueidentifier] NOT NULL,
 	[Amount] [decimal](18, 2) NULL,
 	[Payment_Status] [nvarchar](50) NULL,
-	[Paid_date] [datetime] NULL,
+	[Paid_Date] [date] NULL,
  CONSTRAINT [PK_Fines] PRIMARY KEY CLUSTERED 
 (
 	[Fine_Id] ASC
@@ -109,23 +114,10 @@ CREATE TABLE [dbo].[Fines](
 ) ON [PRIMARY]
 
 
-# Step 2. Mocking some data
-
--- [Categories]
-INSERT INTO Categories (Category_Id, Category_Name)
-VALUES ('e1d2c3b4-a5b6-4c7d-8e9f-0a1b2c3d4e5f', 'Educations'), ('f3e2d1c0-b9a8-4736-8251-0d9c8b7a6f5e', 'Sports');
-
--- [Books]
-INSERT INTO Books (Book_Id, ISBN, Title, Author, Publisher, Publish_Year, Total_Copies, Available_Copies, Location, Category_Id, Is_Active)
-VALUES ('a1c94297-b892-4e2b-bf2d-cc6358e8b111', '120034567895', 'Programing Teaching', 'Somsak', 'General Publisher', 2026, 5, 5, 'Shelf 1, Row number 1', 'e1d2c3b4-a5b6-4c7d-8e9f-0a1b2c3d4e5f', 1),
-('5c7d8e9f-0a1b-4c2d-3e4f-5a6b7c8d9e0f', '654789000127', 'Food Teaching', 'Marisa', 'General Publisher', 2026, 10, 10, 'Shelf 2, Row number 1', 'e1d2c3b4-a5b6-4c7d-8e9f-0a1b2c3d4e5f', 1),
-('1d2e3f4a-5b6c-4d7e-8f9a-0b1c2d3e4f5a', '365478009103', 'Football', 'Sutin', 'DD Publisher', 2026, 3, 3, 'Shelf 3, Row number 1', 'f3e2d1c0-b9a8-4736-8251-0d9c8b7a6f5e', 1),
-('b7c8d9e0-fa1b-4c2d-3e4f-5a6b7c8d9e0f', '365479214008', 'Basketball', 'Anna', 'DD Publisher', 2026, 8, 8, 'Shelf 3, Row number 2', 'f3e2d1c0-b9a8-4736-8251-0d9c8b7a6f5e', 1);
-
--- [Staff ]
--- ** Login password: Test-P@ssw0rd
+# Step 2. Mocking Staff
+-- ** Login password: P@ssw0rd
 INSERT INTO Staff (
 Staff_Id, ID_Card, Username, [Password], First_Name, Last_Name, 
 Position, Email, Phone, Is_Active, Create_Date)
-VAlUES ('d3b07384-d113-4956-a55a-ae1644d32d3e', '1122334455667', 'Admin', '$2a$11$UE.VVxIWovwQjXClYIQIbOaEtRd4M37qq/I2u6EIfDRLYo8cCuZcO', 
+VAlUES ('d3b07384-d113-4956-a55a-ae1644d32d3e', '1122334455667', 'Admin', '$2a$11$sfjYmRf0RddvYO8ufQak7uUwlMkrhyH85/7fAzMLuaBmdeSJhPP22', 
 'Manee', 'Jaidee', 'Library Admin', 'Manee@mail.com', '0921345678', 1, GETDATE());
