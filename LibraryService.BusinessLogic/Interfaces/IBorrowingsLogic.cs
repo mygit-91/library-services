@@ -5,7 +5,7 @@ namespace LibraryService.BusinessLogic.Interfaces
 {
     public interface IBorrowingsLogic
     {
-        Task<ResponseModel> GetBorrowingAsync(GetBorrowingsInputModel data);
+        Task<ResponseModel> GetBorrowingListAsync(GetBorrowingsInputModel data);
         Task<ResponseModel> AddBorrowingAsync(AddBorrowingsInputModel data);
         Task<ResponseModel> ReturnBookAsync(ReturnBookInputModel data);
     }

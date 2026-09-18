@@ -13,52 +13,85 @@ namespace LibraryService.BusinessLogic
     {
         private readonly AppDbContext _context = context;
 
-        public async Task<ResponseModel> GetBorrowingAsync(GetBorrowingsInputModel data)
+        public async Task<ResponseModel> GetBorrowingListAsync(GetBorrowingsInputModel data)
         {
             ResponseModel response;
 
             try
             {
-                // Get member id
-                Guid memberId = Guid.Empty;
-                if (!string.IsNullOrEmpty(data.Member_Id_Card))
+                // Check status
+                string status = "Returned";
+                if (data.IsBorrowList)
                 {
-                    var members = await _context.Members.Where(member => member.ID_Card == data.Member_Id_Card).ToListAsync();
-                    memberId = members[0].Member_Id;
+                    status = "Borrowed";
                 }
-
+                
                 // Create query
-                IQueryable<Borrowings> query = _context.Borrowings;
+                IQueryable<Borrowings> borrowQuery = _context.Borrowings.Where(borrow => borrow.Status == status);
+                IQueryable<Books> booksQuery = _context.Books;
+                //IQueryable<Staff> staffQuery = _context.Staff;
+                IQueryable<Members> memberQuery = _context.Members;
+                IQueryable<Fines> finesQuery = _context.Fines;
 
-                // Check condition
-                if (data.Is_Staff)
+                // Add filter condition to query
+                string searchTopic = data.SearchTopic.ToLower();
+                string searchText = data.SearchText.ToLower();
+
+                if(data.IsStaff)
                 {
-                    if (data.Staff_Id != Guid.Empty && data.Staff_Id != null)
+                    // For staff search
+                    if (searchTopic == "isbn")
                     {
-                        query = query.Where(borrowings => borrowings.Staff_Id == data.Staff_Id);
+                        booksQuery = booksQuery.Where(books => books.ISBN.Contains(searchText));
                     }
-
-                    if (memberId != Guid.Empty)
+                    else if (searchTopic == "title")
                     {
-                        query = query.Where(borrowings => borrowings.Member_Id == memberId);
+                        booksQuery = booksQuery.Where(books => books.Title.Contains(searchText));
                     }
-
+                    else if (searchTopic == "membercardid")
+                    {
+                        memberQuery = memberQuery.Where(member => member.ID_Card.Contains(searchText));
+                    }
+                    else
+                    {
+                        // Seclect all
+                    }
                 } else
                 {
-                    query = query.Where(borrowings => borrowings.Member_Id == memberId);
+                    // For member search
+                    memberQuery = memberQuery.Where(member => member.ID_Card == searchText);
                 }
 
-                // Add join Fines
-                var joinedQuery = query.Join(
-                    _context.Fines,
-                    borrowings => borrowings.Borrow_Id,
-                    fines => fines.Borrow_Id,
-                    (borrowings, fines) => new
-                    {
-                        Borrowings = borrowings,
-                        Fines = fines
-                    }
-                );
+                // Join with Categories
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                var joinedQuery = (from borrow in borrowQuery
+                                   join fines in finesQuery
+                                   on borrow.Borrow_Id equals fines.Borrow_Id
+                                   join books in booksQuery
+                                   on borrow.Book_Id equals books.Book_Id
+                                   join member in memberQuery
+                                   on borrow.Member_Id equals member.Member_Id
+                                   
+                                   select new
+                                   {
+                                       borrowId = borrow.Borrow_Id,
+                                       borrowDate = borrow.Borrow_Date,
+                                       dueDate = borrow.Due_Date,
+                                       returnDate = borrow.Return_Date,
+                                       bookId = books.Book_Id,
+                                       author = books.Author,
+                                       isbn = books.ISBN,
+                                       bookTitle = books.Title,
+                                       memberId = member.Member_Id,
+                                       memberCardId = member.ID_Card,
+                                       memberName = member.First_Name + " " + member.Last_Name,
+                                       finesId = fines.Fine_Id,
+                                       amount = fines.Amount,
+                                       paymentStatus = fines.Payment_Status,
+                                       paidDate = fines.Paid_Date,
+                                       status = borrow.Status,
+                                       isOverTime = borrow.Due_Date >= today ? false : true,
+                                   });
 
                 // Process query
                 var result = await joinedQuery.ToListAsync();
@@ -79,35 +112,36 @@ namespace LibraryService.BusinessLogic
             try
             {
                 //Check existing
-                bool isExist = await _context.Books.AnyAsync(books => books.Book_Id == data.Book_Id && books.Available_Copies > 0);
+                bool isExist = await _context.Books.AnyAsync(books => books.Book_Id == data.BookId && books.Available_Copies > 0);
                 if (isExist)
                 {
+                    // Save borrow to database
                     Borrowings borrowings = new()
                     {
-                        Book_Id = data.Book_Id,
-                        Member_Id = data.Member_Id,
-                        Staff_Id = data.Staff_Id,
-                        Borrow_Date = data.Borrow_Date,
-                        Due_Date = data.Due_Date,
+                        Book_Id = data.BookId,
+                        Member_Id = data.MemberId,
+                        Staff_Id = data.StaffId,
+                        Borrow_Date = data.BorrowDate,
+                        Due_Date = data.DueDate,
                         Status = "Borrowed"
                     };
 
+                    _context.Borrowings.Add(borrowings);
+                    await _context.SaveChangesAsync();
+
+                    // Save fines to database
                     Fines fines = new()
                     {
                         Borrow_Id = borrowings.Borrow_Id,
                         Amount = 0,
                     };
 
-                    // Save to database
-                    _context.Borrowings.Add(borrowings);
-                    await _context.SaveChangesAsync();
-
                     _context.Fines.Add(fines);
                     await _context.SaveChangesAsync();
 
                     // Update book available
                     await _context.Books
-                    .Where(books => books.Book_Id ==data.Book_Id)
+                    .Where(books => books.Book_Id ==data.BookId)
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(books => books.Available_Copies, books => books.Available_Copies - 1));
 
@@ -115,7 +149,7 @@ namespace LibraryService.BusinessLogic
                 }
                 else
                 {
-                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.BOOK_NOT_AVAILABLE, data);
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.BOOK_NOT_AVAILABLE);
                 }
             }
             catch (Exception ex)
@@ -132,31 +166,57 @@ namespace LibraryService.BusinessLogic
 
             try
             {
-                // Update borrowing
-                await _context.Borrowings
-                .Where(borrowings => borrowings.Borrow_Id == data.Borrow_Id)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(borrowings => borrowings.Return_Date, data.Return_Date)
-                    .SetProperty(borrowings => borrowings.Status, "Returned"));
-
-                // Update fines
-                if (data.Fines.Amount > 0)
+                // Validate fines data
+                bool isValid = true;
+                if (data.IsOverTime)
                 {
-                    await _context.Fines
-                    .Where(fines => fines.Fine_Id == data.Fines.Fine_Id)
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(fines => fines.Amount, data.Fines.Amount)
-                        .SetProperty(fines => fines.Payment_Status, data.Fines.Payment_Status)
-                        .SetProperty(fines => fines.Paid_date, data.Fines.Paid_date));
+                    if(data.Amount == null || data.Amount <= 0)
+                    {
+                        isValid = false;
+                    } else if (string.IsNullOrEmpty(data.PaymentStatus))
+                    {
+                        isValid = false;
+                    } else if (data.PaymentStatus == null)
+                    {
+                        isValid = false;
+                    } else
+                    {
+                        isValid = true;
+                    }
                 }
 
-                // Update book available
-                await _context.Books
-                .Where(books => books.Book_Id == data.Book_Id)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(books => books.Available_Copies, books => books.Available_Copies + 1));
+                if (isValid)
+                {
+                    // Update borrowing
+                    await _context.Borrowings
+                    .Where(borrowings => borrowings.Borrow_Id == data.BorrowId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(borrowings => borrowings.Return_Date, data.ReturnDate)
+                        .SetProperty(borrowings => borrowings.Status, "Returned"));
 
-                response = new ResponseModel(StatusCodes.Status200OK, AppMessage.UPDATE_SUCCESS, null);
+                    // Update fines
+                    if (data.IsOverTime)
+                    {
+                        await _context.Fines
+                        .Where(fines => fines.Fine_Id == data.FinesId)
+                        .ExecuteUpdateAsync(setters => setters
+                            .SetProperty(fines => fines.Amount, data.Amount)
+                            .SetProperty(fines => fines.Payment_Status, data.PaymentStatus)
+                            .SetProperty(fines => fines.Paid_Date, data.PaidDate));
+                    }
+
+                    // Update book available
+                    await _context.Books
+                    .Where(books => books.Book_Id == data.BookId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(books => books.Available_Copies, books => books.Available_Copies + 1));
+
+                    response = new ResponseModel(StatusCodes.Status200OK, AppMessage.UPDATE_SUCCESS);
+                } else
+                {
+                    response = new ResponseModel(StatusCodes.Status400BadRequest, AppMessage.FINES_IS_REQUIRED);
+                }
+                
             }
             catch (Exception ex)
             {

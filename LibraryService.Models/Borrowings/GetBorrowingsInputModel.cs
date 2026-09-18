@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,8 +9,14 @@ namespace LibraryService.Models.Borrowings
 {
     public class GetBorrowingsInputModel
     {
-        public string? Member_Id_Card { get; set; }
-        public Guid? Staff_Id { get; set; }
-        public bool Is_Staff { get; set; } = false;
+        [Required]
+        public required string SearchTopic { get; set; }
+
+        public required string SearchText { get; set; }
+
+        public required bool IsStaff { get; set; }
+
+        [Required]
+        public required bool IsBorrowList { get; set; }
     }
 }

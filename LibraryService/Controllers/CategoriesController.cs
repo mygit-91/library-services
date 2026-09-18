@@ -15,7 +15,6 @@ namespace LibraryService.Controllers
         private readonly ICategoriesLogic _categoriesLogic = categoriesLogic;
 
         [HttpPost("list")]
-        [AllowAnonymous]
         public async Task<ActionResult<ResponseModel>> GetCategory(GetCategoryInputModel data)
         {
             ResponseModel response = await _categoriesLogic.GetCategoryAsync(data);

@@ -12,6 +12,6 @@ namespace LibraryService.Entities.Data
         public required Guid Borrow_Id { get; set; }
         public required decimal Amount { get; set; }
         public string? Payment_Status { get; set; }
-        public DateTime? Paid_date { get; set; }
+        public DateOnly? Paid_Date { get; set; }
     }
 }

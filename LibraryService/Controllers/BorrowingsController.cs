@@ -6,18 +6,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryService.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/borrowings")]
     [ApiController]
     [Authorize]
     public class BorrowingsController(IBorrowingsLogic borrowing) : ControllerBase
     {
         private readonly IBorrowingsLogic _borrowing = borrowing;
 
-        [HttpPost("get-borrowing")]
+        [HttpPost("list")]
         [AllowAnonymous]
-        public async Task<ActionResult<ResponseModel>> GetBorrowing(GetBorrowingsInputModel data)
+        public async Task<ActionResult<ResponseModel>> GetBorrowingList(GetBorrowingsInputModel data)
         {
-            ResponseModel response = await _borrowing.GetBorrowingAsync(data);
+            ResponseModel response = await _borrowing.GetBorrowingListAsync(data);
             if (response.Status == StatusCodes.Status200OK)
             {
                 return Ok(response);
@@ -28,7 +28,7 @@ namespace LibraryService.Controllers
             }
         }
 
-        [HttpPost("add-borrowing")]
+        [HttpPost("add")]
         public async Task<ActionResult<ResponseModel>> AddBorrowing(AddBorrowingsInputModel data)
         {
             ResponseModel response = await _borrowing.AddBorrowingAsync(data);
@@ -42,7 +42,7 @@ namespace LibraryService.Controllers
             }
         }
 
-        [HttpPost("return-book")]
+        [HttpPut("return")]
         public async Task<ActionResult<ResponseModel>> ReturnBook(ReturnBookInputModel data)
         {
             ResponseModel response = await _borrowing.ReturnBookAsync(data);
