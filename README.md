@@ -116,10 +116,14 @@ CREATE TABLE [dbo].[Fines](
 ) ON [PRIMARY]
 
 
-# Step 2. Mocking Staff
--- ** Login password: P@ssw0rd
+# Step 2. Mocking Data
+-- [Staff] ** Login password: P@ssw0rd
 INSERT INTO Staff (
 Staff_Id, ID_Card, Username, [Password], First_Name, Last_Name, 
 Position, Email, Phone, Is_Active, Create_Date)
 VAlUES ('d3b07384-d113-4956-a55a-ae1644d32d3e', '1122334455667', 'Admin', '$2a$11$sfjYmRf0RddvYO8ufQak7uUwlMkrhyH85/7fAzMLuaBmdeSJhPP22', 
 'Manee', 'Jaidee', 'Library Admin', 'Manee@mail.com', '0921345678', 1, GETDATE());
+
+-- [Members]
+INSERT INTO Members (Member_Id, ID_Card, First_Name, Last_Name, Email, Phone, [Address], Is_Active)
+VALUES ('7f1bfa98-3d23-4b62-9e8c-8f96e41b2123', '1479630258742', 'Somchai', 'Kondee', 'Som@gmail.com', '0874563210', 'Bangkok, Thailand', 1);
