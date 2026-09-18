@@ -4,9 +4,11 @@
 - Runing localhost: https://localhost:7226/swagger
 
 #Start Project
-- Open file appsettings.json
-- Change SQLConnection to your database
+1. Open file appsettings.json
+2. Change SQLConnection to your database
+3. If start project not detect, Then set start project to LibraryService project
 
+   
 # SQL Config
 # Step 1. Create Table
 
